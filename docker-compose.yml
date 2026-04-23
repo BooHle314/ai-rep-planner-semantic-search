@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  # FastAPI Backend
+  api:
+    build: ./api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./cache:/app/cache
+    environment:
+      - REDIS_HOST=redis
+      - OSM_USER_AGENT=SalesRoutePlanner/1.0
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      - redis
+
+  # Streamlit Frontend
+  ui:
+    build: ./ui
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/app/data
+      - ./cache:/app/cache
+    depends_on:
+      - api
+    command: streamlit run app.py --server.port=8501 --server.address=0.0.0.0
+
+  # Redis for caching
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  redis_data:
